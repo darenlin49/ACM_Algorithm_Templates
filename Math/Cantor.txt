@@ -1,0 +1,18 @@
+int cantor[]={1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800};           //=n!
+
+//康托展开，求数列是全排列第几大数(复杂度O（n^2）)
+
+//参数puzz[]为待展开之的集合的各元素,如需展开2134,则puzz[4]={2,1,3,4}.这里puzz也可以是string，char[]...etc
+
+int Can(int puzz[],int psize)           //psize puzz集合的大小
+{
+    int ct = 0;
+    for(int i = 0; i < psize-1; i++){
+        int tmp = 0;
+        for(int j = i + 1; j < psize; j++){
+            if( puzz[j] < puzz[i]) tmp++;
+        }
+        ct += tmp * cantor[psize-i-1];
+    }
+    return ct;
+}

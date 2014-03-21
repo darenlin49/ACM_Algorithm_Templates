@@ -1,0 +1,119 @@
+\subsection{基本函数}
+    \subsubsection{Point定义}
+        \begin{lstlisting}[language=c++]
+struct Point
+{
+    double x, y;
+    Point() {}
+    Point(double _x, double _y)
+    {
+        x = _x, y = _y;
+    }
+    Point operator -(const Point &b)const
+    {
+        return Point(x - b.x, y - b.y);
+    }
+    double operator *(const Point &b)const
+    {
+        return x * b.y - y * b.x;
+    }
+    double operator &(const Point &b)const
+    {
+        return x * b.x + y * b.y;
+    }
+};
+        \end{lstlisting}
+    \subsubsection{Line定义}
+        \begin{lstlisting}[language=c++]
+struct Line
+{
+    Point s, e;
+    double k;
+    Line() {}
+    Line(Point _s, Point _e)
+    {
+        s = _s, e = _e;
+        k = atan2(e.y - s.y, e.x - s.x);
+    }
+    Point operator &(const Line &b)const
+    {
+        Point res = s;
+        //注意：有些题目可能会有直线相交或者重合情况
+        //可以把返回值改成`pair<Point,int>`来返回两直线的状态。
+        double t = ((s - b.s) * (b.s - b.e)) / ((s - e) * (b.s - b.e));
+        res.x += (e.x - s.x) * t;
+        res.y += (e.y - s.y) * t;
+        return res;
+    }
+};
+        \end{lstlisting}
+    \subsubsection{距离：两点距离}
+        \begin{lstlisting}[language=c++]
+double dist2(Point a, Point b)
+{
+    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+}
+        \end{lstlisting}
+    \subsubsection{距离：点到线段距离}
+        res：点到线段最近点
+        \begin{lstlisting}[language=c++]
+double dist2(Point p1, Point p2, Point p)
+{
+    Point res;
+    double a, b, t;
+    a = p2.x - p1.x;
+    b = p2.y - p1.y;
+    t = ((p.x - p1.x) * a + (p.y - p1.y) * b) / (a * a + b * b);
+    if (t >= 0 && t <= 1)
+    {
+        res.x = p1.x + a * t;
+        res.y = p1.y + b * t;
+    }
+    else
+    {
+        if (dist2(p, p1) < dist2(p, p2))
+            res = p1;
+        else
+            res = p2;
+    }
+    return dist2(p, res);
+}
+        \end{lstlisting}
+    \subsubsection{面积：多边形}
+        点按逆时针排序。
+        \begin{lstlisting}[language=c++]
+double CalcArea(Point p[], int n)
+{
+    double res = 0;
+    for (int i = 0; i < n; i++)
+        res += (p[i] * p[(i + 1) % n]) / 2;
+    return res;
+}
+        \end{lstlisting}
+    \subsubsection{判断：线段相交}
+        \begin{lstlisting}[language=c++]
+bool inter(Line l1,Line l2)
+{
+    return (max(l1.s.x,l1.e.x) >= min(l2.s.x,l2.e.x) &&
+            max(l2.s.x,l2.e.x) >= min(l1.s.x,l1.e.x) &&
+            max(l1.s.y,l1.e.y) >= min(l2.s.y,l2.e.y) &&
+            max(l2.s.y,l2.e.y) >= min(l1.s.y,l1.e.y) &&
+            ((l2.s-l1.s)*(l1.e-l1.s))*((l2.e-l1.s)*(l1.e-l1.s)) <= 0 &&			//`若端点不算相交则两个<=改为<即可`
+            ((l1.s-l2.s)*(l2.e-l2.s))*((l1.e-l2.s)*(l2.e-l2.s)) <= 0);
+}
+        \end{lstlisting}
+    \subsubsection{求解：点到线最近点}
+	\begin{lstlisting}[language=c++]
+Point NPT(Point P, Line L)
+{
+    Point result;
+    double a, b, t;
+    a = L.e.x - L.s.x;
+    b = L.e.y - L.s.y;
+    t = ((P.x - L.s.x) * a + (P.y - L.s.y) * b ) / (a * a + b * b);
+    //`如果t小于0或者大于1,说明最近点在L.s和L.e这条线段之外`
+    result.x = L.s.x + a * t;
+    result.y = L.s.y + b * t;
+    return result;
+}
+	\end{lstlisting}

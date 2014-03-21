@@ -1,0 +1,173 @@
+ #include <iostream>
+ #include <cstdio>
+ #include <cstdlib>
+ #include <cmath>
+ #include <vector>
+ #include <stack>
+ #include <queue>
+ #include <map>
+ #include <algorithm>
+ #include <string>
+ #include <cstring>
+ #define MID(x,y) ((x+y)>>1)
+ 
+ using namespace std;
+ const int maxn = 100100;
+ 
+ int id,n,K;
+ int ans[maxn];
+ int w[maxn],wb[maxn];
+ int vis[maxn];
+ int a[maxn];            //线性权值
+ int l[maxn],r[maxn];    //线性区间
+ vector <int> v[maxn];   //边表
+ vector <int> pos[maxn]; //记录某数出现的位置
+ int num[maxn];          //记录某个数出现多少次了
+ map <int, int>  M;      //离散化
+ int mtot;
+ 
+ struct ANS
+ {
+     int l,r;
+     int id;
+ }Q[maxn];
+ 
+ bool cmp(ANS a1, ANS a2)
+ {
+     return a1.r<a2.r;
+ }
+ 
+ void dfs(int x)
+ {
+     // 将树形结构变成线性结构
+     if (!vis[x])
+     {
+         id ++;
+         l[x] = id;
+         a[id] = w[x];
+         vis[x] = 1;
+         vector <int> ::iterator vp;
+         if (v[x].size())
+             for (vp = v[x].begin(); vp != v[x].end(); vp ++)
+                 dfs(*vp);
+         r[x] = id;
+     }
+ }
+ 
+ int sum[maxn<<2],add[maxn<<2];
+ void build(int l,int r,int rt)
+ {
+     sum[rt] = 0;
+     add[rt] = 0;
+     if (l == r)  return ;
+     int mid = MID(l,r);
+     build(l,mid,rt<<1);
+     build(mid+1,r,rt<<1|1);
+ }
+ void pushdown(int rt,int w)
+ {
+     if (add[rt])
+     {
+         add[rt<<1] += add[rt];
+         add[rt<<1|1] += add[rt];
+         sum[rt<<1] += add[rt] * (w - (w >> 1));
+         sum[rt<<1|1] += add[rt] * (w >> 1);
+         add[rt] = 0;
+     }
+ }
+ void update(int s,int t,int v,int l,int r,int rt)
+ {
+     if (s <= l && r <= t)
+     {
+         sum[rt] += v * (r - l + 1);
+         add[rt] += v;
+         return ;
+     }
+     pushdown(rt, r-l+1);
+     int mid = MID(l,r);
+     if (s <= mid)   update(s,t,v,l,mid,rt<<1);
+     if (mid < t)    update(s,t,v,mid+1,r,rt<<1|1);
+ }
+ int query(int p,int l,int r,int rt)
+ {
+     if (l == p && r == p)
+     {
+         return sum[rt];
+     }
+     pushdown(rt,r-l+1);
+     int mid = MID(l,r);
+     if (p <= mid)   return query(p,l,mid,rt<<1);
+     else return query(p,mid+1,r,rt<<1|1);
+ }
+ int main()
+ {
+     //freopen("data.txt","r+",stdin);
+     int tt,caseo = 1;
+     scanf("%d",&tt);
+     while(tt--)
+     {
+         //Initialize
+         mtot = id = 0;
+         memset(v,0,sizeof(v));
+         memset(vis,0,sizeof(vis));
+         memset(pos,0,sizeof(pos));
+         memset(num,0,sizeof(num));
+         //input
+         printf("Case #%d:\n",caseo ++);
+         scanf("%d%d",&n,&K);
+         for (int i = 1; i <= n; i ++)
+             scanf("%d",&w[i]);
+         for (int i = 1; i < n; i ++)
+         {
+             int a,b;
+             scanf("%d%d",&a,&b);
+             v[a].push_back(b);  //边表
+         }
+         //树形结构转线性结构
+         dfs(1);
+         M.clear();
+ 
+         //权值离散化
+         for (int i = 1; i <= n; i ++)
+             if (!M[a[i]])   M[a[i]] = ++ mtot;
+ 
+         int q;
+         scanf("%d",&q);
+         for (int i = 0; i < q; i ++)
+         {
+             int p;
+             scanf("%d",&p);
+             Q[i].l = l[p];
+             Q[i].r = r[p];
+             Q[i].id = i;
+         }
+         sort(Q,Q+q,cmp);
+         int pt = 0;
+         build(1,n,1);
+         for (int i = 1; i <= n; i ++)
+         {
+             pos[M[a[i]]].push_back(i);
+             num[M[a[i]]] ++;
+             if (num[M[a[i]]] >= K)
+                 if (num[M[a[i]]] == K)
+                     update(1,pos[M[a[i]]][0],1,1,n,1);
+                 else
+                 {
+                     //在这里: num[M[a[i]]]-K-1表示P(k-K)，因为pos是从0开始的
+                     int ss = (num[M[a[i]]] - K <= 2)?1:(num[M[a[i]]] - K - 2);
+                     update(ss,pos[M[a[i]]][num[M[a[i]]]-K-1],-1,1,n,1);
+                     update(pos[M[a[i]]][num[M[a[i]]]-K-1]+1,pos[M[a[i]]][num[M[a[i]]]-K],1,1,n,1);
+                 }
+             else;
+             while(pt < q && Q[pt].r == i)
+             {
+                 ans[Q[pt].id] = query(Q[pt].l,1,n,1);
+                 pt ++;
+             }
+         }
+         for (int i = 0; i < q; i ++)
+             printf("%d\n",ans[i]);
+         if (tt) printf("\n");
+     }
+     return 0;
+ }
